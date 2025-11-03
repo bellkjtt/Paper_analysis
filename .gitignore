@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Output directories
+output/
+extracted_figures/
+visualizations/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Test files
+test_*.pdf
+sample_*.pdf
+*.tmp
+
+# Model cache
+.layoutparser/
+.torch/
+api_output/
+paper-analysis-next/.next/
+paper-analysis-next/node_modules/

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>논문 분석 시스템</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">논문 분석 시스템</h1>
+            <p class="subtitle">Gemini Flash 2.5를 활용한 학술 논문 분석</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-area">
+                    <div class="upload-icon">📄</div>
+                    <h2 class="upload-title">PDF 파일 업로드</h2>
+                    <p class="upload-description">분석할 논문 PDF를 선택하세요</p>
+
+                    <input
+                        type="file"
+                        id="pdfInput"
+                        accept=".pdf"
+                        class="file-input"
+                        aria-label="PDF 파일 선택"
+                    >
+                    <label for="pdfInput" class="file-label">
+                        파일 선택
+                    </label>
+
+                    <div id="fileInfo" class="file-info hidden"></div>
+                </div>
+
+                <!-- Options -->
+                <div class="options-area">
+                    <h3 class="options-title">분석 옵션</h3>
+
+                    <div class="option-group">
+                        <label class="option-label">
+                            📖 전체 논문 분석
+                        </label>
+                        <p class="option-description">
+                            참고문헌을 제외한 모든 페이지를 자동으로 분석합니다
+                        </p>
+                    </div>
+
+                    <div class="option-group">
+                        <label for="templateSelect" class="option-label">
+                            템플릿 선택 (선택사항)
+                        </label>
+                        <select id="templateSelect" class="option-select" aria-label="템플릿 선택">
+                            <option value="default">기본 템플릿</option>
+                            <option value="detailed">상세 분석 템플릿</option>
+                            <option value="simple">간단 요약 템플릿</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                    id="analyzeButton"
+                    class="analyze-button"
+                    disabled
+                    aria-label="분석 시작"
+                >
+                    분석 시작
+                </button>
+            </section>
+
+            <!-- Progress Section -->
+            <section class="progress-section hidden" id="progressSection">
+                <div class="progress-content">
+                    <div class="spinner"></div>
+                    <h3 class="progress-title">분석 진행 중...</h3>
+                    <p class="progress-description">
+                        PDF를 처리하고 Gemini로 분석하고 있습니다.<br>
+                        수 분이 소요될 수 있습니다.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Result Section -->
+            <section class="result-section hidden" id="resultSection">
+                <div class="result-header">
+                    <h2 class="result-title">분석 결과</h2>
+                    <div class="result-actions">
+                        <button id="copyButton" class="action-button" aria-label="복사">
+                            📋 복사
+                        </button>
+                        <button id="downloadButton" class="action-button" aria-label="다운로드">
+                            💾 다운로드
+                        </button>
+                        <button id="newAnalysisButton" class="action-button" aria-label="새 분석">
+                            🔄 새 분석
+                        </button>
+                    </div>
+                </div>
+
+                <div class="result-meta" id="resultMeta"></div>
+
+                <div class="result-content" id="resultContent"></div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section hidden" id="errorSection">
+                <div class="error-content">
+                    <div class="error-icon">⚠️</div>
+                    <h3 class="error-title">오류 발생</h3>
+                    <p class="error-message" id="errorMessage"></p>
+                    <button id="retryButton" class="retry-button">
+                        다시 시도
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p class="footer-text">
+                Powered by Gemini Flash 2.5 | API v1.0.0
+            </p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/markdown.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
