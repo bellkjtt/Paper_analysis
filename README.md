@@ -33,9 +33,10 @@ AI-powered academic paper analysis system using Google Gemini Flash 2.5 for comp
 ### Prerequisites
 
 - Python 3.11+
+- Node.js 18+ (for frontend)
 - Google Gemini API key ([Get one here](https://ai.google.dev/))
 
-### Installation
+### Backend Setup
 
 1. Clone the repository:
 ```bash
@@ -49,7 +50,7 @@ cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 ```
 
-3. Install dependencies:
+3. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
 ```
@@ -59,14 +60,76 @@ pip install -r requirements.txt
 uvicorn paper_analysis_api.main:app --reload --port 8000
 ```
 
-5. Access the API:
+5. Verify API is running:
 - API: http://localhost:8000
 - Interactive Docs: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
+### Frontend Setup
+
+1. Navigate to frontend directory:
+```bash
+cd paper-analysis-next
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Configure environment variables:
+```bash
+cp .env.local.example .env.local
+# Edit .env.local to set NEXT_PUBLIC_API_URL if needed
+```
+
+4. Run development server:
+```bash
+npm run dev
+```
+
+5. Access the application:
+- Frontend: http://localhost:3000
+
+### Full Stack Development
+
+To run both backend and frontend simultaneously:
+
+**Terminal 1 (Backend):**
+```bash
+uvicorn paper_analysis_api.main:app --reload --port 8000
+```
+
+**Terminal 2 (Frontend):**
+```bash
+cd paper-analysis-next
+npm run dev
+```
+
+Then open http://localhost:3000 in your browser.
+
 ## Usage
 
-### API Endpoint
+### Web UI (Recommended)
+
+1. Make sure both backend and frontend are running
+2. Open http://localhost:3000 in your browser
+3. Click "PDF 파일 선택" to upload your academic paper (PDF format)
+4. Click "분석 시작" to begin analysis
+5. Wait for the analysis to complete (approximately 12 seconds per page)
+6. View the analysis results in an easy-to-read format
+7. Download results as:
+   - **Markdown**: Plain markdown file
+   - **PDF**: Formatted PDF document
+
+**Features:**
+- Real-time progress tracking
+- Beautiful markdown rendering
+- Figure and table visualization
+- Easy-to-understand explanations with metaphors
+- One-click download in multiple formats
+
+### API Endpoint (Advanced)
 
 **POST /api/v1/analyze**
 
@@ -107,6 +170,8 @@ print(result["markdown_content"])
 
 ## Configuration
 
+### Backend Configuration
+
 Create a `.env` file in the project root:
 
 ```env
@@ -120,24 +185,70 @@ GEMINI_FALLBACK_MODEL=gemini-1.5-flash
 
 See `.env.example` for all available options.
 
+### Frontend Configuration
+
+Create a `.env.local` file in the `paper-analysis-next` directory:
+
+```env
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# For local network access (e.g., mobile testing)
+# NEXT_PUBLIC_API_URL=http://192.168.1.100:8000
+
+# For production
+# NEXT_PUBLIC_API_URL=https://your-api-domain.com
+```
+
+See `paper-analysis-next/.env.local.example` for all options.
+
 ## Deployment
 
-### Render
+### Backend Deployment
 
-The project includes `render.yaml` for easy deployment:
+#### Render
+
+The project includes `render.yaml` for easy backend deployment:
 
 1. Push to GitHub
 2. Connect repository to Render
-3. Add `GEMINI_API_KEY` environment variable
+3. Add `GEMINI_API_KEY` environment variable in Render dashboard
 4. Deploy
 
-### Railway
+#### Railway
 
 Use the included `railway.toml`:
 
-1. Install Railway CLI
+1. Install Railway CLI: `npm install -g @railway/cli`
 2. Run `railway up`
-3. Add environment variables via Railway dashboard
+3. Add `GEMINI_API_KEY` environment variable via Railway dashboard
+
+### Frontend Deployment
+
+#### Vercel (Recommended for Next.js)
+
+1. Push frontend to GitHub
+2. Import project to Vercel
+3. Set environment variable:
+   - `NEXT_PUBLIC_API_URL`: Your deployed backend URL
+4. Deploy
+
+```bash
+# Or use Vercel CLI
+cd paper-analysis-next
+npm install -g vercel
+vercel --prod
+```
+
+#### Build for Production
+
+```bash
+cd paper-analysis-next
+npm run build
+npm start
+```
+
+The production server will run on port 3000.
 
 ## Architecture
 
@@ -148,6 +259,16 @@ Use the included `railway.toml`:
 - **Immutability**: Frozen dataclasses for domain models
 - **Environment-based Configuration**: Secure API key management
 - **Error Handling**: Comprehensive error handling with retries
+
+### Frontend (Next.js 15)
+
+- **Modern Stack**: Next.js 15, React 18, TypeScript, Tailwind CSS
+- **Client-Side Rendering**: Interactive UI with real-time progress updates
+- **Responsive Design**: Mobile-friendly interface
+- **Markdown Rendering**: Beautiful rendering with react-markdown
+- **Export Features**: Download as Markdown or PDF (jspdf + html2canvas)
+- **Type Safety**: Full TypeScript coverage
+- **State Management**: React hooks for local state management
 
 ### Analysis Workflow
 
@@ -170,12 +291,21 @@ Use the included `railway.toml`:
 
 ### Running Tests
 
+**Backend:**
 ```bash
 pytest
 ```
 
+**Frontend:**
+```bash
+cd paper-analysis-next
+npm run lint
+npm run build  # Test production build
+```
+
 ### Code Style
 
+**Backend:**
 ```bash
 # Format code
 black .
@@ -187,13 +317,32 @@ mypy paper_analysis_api/
 flake8 paper_analysis_api/
 ```
 
+**Frontend:**
+```bash
+cd paper-analysis-next
+
+# Linting
+npm run lint
+
+# Type checking (TypeScript)
+npx tsc --noEmit
+```
+
 ## Environment Variables
+
+### Backend Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `GEMINI_API_KEY` | Yes | - | Google Gemini API key |
 | `GEMINI_MODEL_NAME` | No | `gemini-2.5-flash` | Primary model to use |
 | `GEMINI_FALLBACK_MODEL` | No | `gemini-1.5-flash` | Fallback model |
+
+### Frontend Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | Yes | `http://localhost:8000` | Backend API URL |
 
 ## Analysis Template
 
@@ -221,7 +370,9 @@ See `template.md` for the full format.
 
 ## Troubleshooting
 
-### API Key Issues
+### Backend Issues
+
+#### API Key Issues
 
 ```
 ValueError: GEMINI_API_KEY environment variable is not set
@@ -229,13 +380,45 @@ ValueError: GEMINI_API_KEY environment variable is not set
 
 **Solution**: Create `.env` file with your API key or set environment variable
 
-### Network Errors
+#### Network Errors
 
 The system automatically retries on SSL and network errors (3 attempts with exponential backoff).
 
-### PDF Processing Issues
+#### PDF Processing Issues
 
 Ensure PDF is not encrypted and is a valid PDF file.
+
+### Frontend Issues
+
+#### Cannot connect to backend
+
+```
+Error: Failed to fetch
+```
+
+**Solutions**:
+1. Ensure backend is running on `http://localhost:8000`
+2. Check `NEXT_PUBLIC_API_URL` in `.env.local`
+3. Verify CORS settings if using different domains
+4. For mobile/network access: Use your computer's local IP address instead of `localhost`
+
+#### Build errors
+
+```
+npm run build fails
+```
+
+**Solutions**:
+1. Delete `node_modules` and `.next` folders
+2. Run `npm install` again
+3. Check Node.js version (requires 18+)
+
+#### Environment variables not working
+
+**Solutions**:
+1. Restart Next.js dev server after changing `.env.local`
+2. Ensure variable names start with `NEXT_PUBLIC_` for client-side access
+3. Clear `.next` cache: `rm -rf .next`
 
 ## Contributing
 
@@ -253,7 +436,11 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - **Google Gemini**: For powerful AI analysis capabilities
 - **FastAPI**: For modern, fast web framework
+- **Next.js**: For React framework with great developer experience
 - **PyMuPDF**: For robust PDF processing
+- **Tailwind CSS**: For utility-first styling
+- **react-markdown**: For beautiful markdown rendering
+- **jsPDF & html2canvas**: For client-side PDF generation
 
 ## Support
 
