@@ -11,6 +11,9 @@ ENV/
 dist/
 build/
 
+# Environment variables
+.env
+
 # Output directories
 output/
 extracted_figures/

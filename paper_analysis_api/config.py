@@ -3,10 +3,17 @@ Configuration constants for Paper Analysis API
 All magic values and configuration settings are defined here
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # API Keys
-GEMINI_API_KEY = "AIzaSyBPjYHrA655mLvYlZyJvDrl16C-Yj1fizE"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable is not set. Please check your .env file.")
 
 # Gemini Model Configuration
 # Use stable Gemini 2.5 Flash (no preview, no exp)
