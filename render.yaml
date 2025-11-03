@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: paper-analysis-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn paper_analysis_api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GEMINI_API_KEY
+        sync: false

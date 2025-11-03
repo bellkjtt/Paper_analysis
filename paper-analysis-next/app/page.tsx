@@ -5,10 +5,12 @@
  * Single Responsibility: Page layout and state management
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { AnalysisState } from '@/types';
 import { AnalysisAPI } from '@/lib/api';
 import ReactMarkdown from 'react-markdown';
+import { embedImagesAsBase64, downloadMarkdown } from '@/lib/markdown-utils';
+import { convertToPDF } from '@/lib/pdf-utils';
 
 const MAX_FILE_SIZE_MB = 50;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -21,6 +23,8 @@ export default function HomePage() {
     currentPage: number;
     stage: 'extracting' | 'analyzing' | 'finalizing';
   } | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const markdownRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -49,17 +53,17 @@ export default function HomePage() {
     setState({ type: 'uploading' });
 
     try {
-      // Simulate small delay for uploading feedback
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Get actual PDF page count
+      const pdfInfo = await AnalysisAPI.getPDFInfo(file);
+      const totalPages = pdfInfo.total_pages;
 
       setState({ type: 'analyzing' });
 
-      // Estimate 10 pages average, 12 seconds per page
-      const estimatedPages = 10;
+      // 12 seconds per page
       const secondsPerPage = 12;
 
-      // Start progress simulation
-      setProgress({ totalPages: estimatedPages, currentPage: 0, stage: 'extracting' });
+      // Start progress simulation with actual page count
+      setProgress({ totalPages, currentPage: 0, stage: 'extracting' });
 
       const progressInterval = setInterval(() => {
         setProgress(prev => {
@@ -101,6 +105,44 @@ export default function HomePage() {
     setState({ type: 'idle' });
     setFile(null);
     setProgress(null);
+  };
+
+  // Download handlers
+  const handleDownloadMarkdown = () => {
+    if (state.type !== 'success') return;
+    const filename = `${state.data.pdf_filename.replace('.pdf', '')}_분석.md`;
+    downloadMarkdown(state.data.markdown_content, filename);
+  };
+
+  const handleDownloadWithImages = async () => {
+    if (state.type !== 'success') return;
+
+    setIsDownloading(true);
+    try {
+      const embeddedMarkdown = await embedImagesAsBase64(state.data.markdown_content);
+      const filename = `${state.data.pdf_filename.replace('.pdf', '')}_분석_이미지포함.md`;
+      downloadMarkdown(embeddedMarkdown, filename);
+    } catch (error) {
+      alert('이미지 임베딩에 실패했습니다. 일반 마크다운을 다운로드해주세요.');
+      console.error('Image embedding error:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (state.type !== 'success' || !markdownRef.current) return;
+
+    setIsDownloading(true);
+    try {
+      const filename = `${state.data.pdf_filename.replace('.pdf', '')}_분석.pdf`;
+      await convertToPDF(markdownRef.current, filename);
+    } catch (error) {
+      alert('PDF 변환에 실패했습니다.');
+      console.error('PDF conversion error:', error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -247,15 +289,35 @@ export default function HomePage() {
           <div className="bg-white rounded-lg border border-gray-200">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-2xl font-semibold text-gray-900">분석 결과</h2>
-              <div className="flex gap-3">
-                <a
-                  href={`data:text/markdown;charset=utf-8,${encodeURIComponent(state.data.markdown_content)}`}
-                  download={`${state.data.pdf_filename.replace('.pdf', '')}_분석.md`}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownloadMarkdown}
+                  disabled={isDownloading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium text-sm"
+                  title="이미지 URL이 포함된 마크다운"
                 >
-                  마크다운 다운로드
-                </a>
-                <button onClick={handleReset} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                  📄 MD
+                </button>
+                <button
+                  onClick={handleDownloadWithImages}
+                  disabled={isDownloading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition-colors font-medium text-sm"
+                  title="이미지가 Base64로 임베드된 마크다운"
+                >
+                  {isDownloading ? '⏳ 처리중...' : '🖼️ MD+이미지'}
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 transition-colors font-medium text-sm"
+                  title="PDF로 변환하여 다운로드"
+                >
+                  {isDownloading ? '⏳ 처리중...' : '📑 PDF'}
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+                >
                   새 분석
                 </button>
               </div>
@@ -265,13 +327,14 @@ export default function HomePage() {
               PDF: {state.data.pdf_filename} | 페이지: {state.data.total_pages} | 모델: {state.data.model_used} | 생성: {state.data.analysis_timestamp}
             </div>
 
-            <div className="p-8 prose prose-gray max-w-none">
+            <div ref={markdownRef} className="p-8 prose prose-gray max-w-none">
               <ReactMarkdown
                 components={{
                   img: ({ src, alt }) => {
                     // Fix image URLs to point to backend server
+                    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
                     const imageUrl = src?.startsWith('/api/')
-                      ? `http://127.0.0.1:8000${src}`
+                      ? `${API_BASE}${src}`
                       : src;
 
                     return (
@@ -280,6 +343,7 @@ export default function HomePage() {
                         alt={alt || ''}
                         className="max-w-full h-auto my-4 rounded-lg shadow-md"
                         loading="lazy"
+                        crossOrigin="anonymous"
                       />
                     );
                   },

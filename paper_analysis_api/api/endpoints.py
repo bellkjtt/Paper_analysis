@@ -204,6 +204,39 @@ def cleanup_temp_file(file_path: Path) -> None:
         pass  # Best effort cleanup
 
 
+@router.post("/pdf-info")
+async def get_pdf_info(
+    file: UploadFile = File(..., description="PDF file to get metadata")
+):
+    """
+    Get PDF metadata (page count) without full analysis
+
+    Returns:
+        Page count and filename
+    """
+    import fitz
+
+    validate_uploaded_file(file)
+    temp_pdf_path = await save_uploaded_file(file)
+
+    try:
+        doc = fitz.open(temp_pdf_path)
+        page_count = len(doc)
+        doc.close()
+
+        return JSONResponse(content={
+            "filename": file.filename,
+            "total_pages": page_count
+        })
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to read PDF: {str(e)}"
+        )
+    finally:
+        cleanup_temp_file(temp_pdf_path)
+
+
 @router.get("/images/{analysis_id}/{filename}")
 async def serve_image(analysis_id: str, filename: str):
     """

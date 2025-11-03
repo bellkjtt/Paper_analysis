@@ -10,6 +10,32 @@ const API_ENDPOINT = `${API_BASE_URL}/api/v1/analyze`;
 
 export class AnalysisAPI {
   /**
+   * Get PDF metadata (page count)
+   * @param file PDF file
+   * @returns PDF info with page count
+   * @throws Error if API call fails
+   */
+  static async getPDFInfo(file: File): Promise<{ filename: string; total_pages: number }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/pdf-info`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData: ErrorResponse = await response
+        .json()
+        .catch(() => ({ detail: `HTTP ${response.status}: ${response.statusText}` }));
+
+      throw new Error(errorData.detail);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Analyze PDF file
    * @param file PDF file to analyze
    * @returns Analysis result
